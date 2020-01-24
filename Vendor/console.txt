@@ -1,0 +1,5 @@
+Sony		2=SonyInte
+Nintendo	2=Nintendo
+Apple						3="Apple, Inc."
+Microsoft					3="Microsoft Corporation|Microsoft Corp."
+TwinHan		2=TwinHanT

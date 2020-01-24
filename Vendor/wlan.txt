@@ -1,0 +1,7 @@
+Liteon		2=LiteonTe
+HonHai		2=HonHaiPr
+AzureWav	2=AzureWav
+Intel		2=IntelCor
+Apple						3="Apple, Inc."
+RivetNet	2=RivetNet
+AMPAK		2=AMPAKTec

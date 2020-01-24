@@ -1,0 +1,13 @@
+Apple						3="Apple, Inc."
+ASRock		2=ASRockIn
+MSI			2=Micro-St
+Quanta		2=QuantaCo
+Clevo		2=Clevo
+VMware		2=VMware
+Asus		2=ASUSTekC
+Gigabyte					3="Giga-Byte Technology"
+Intel						3="Intel Corporation"
+Dell						3="Dell Inc."
+Samsung						3="Samsung Electronics Co.,Ltd"
+Sony						3="Sony Corporation"
+HP							3="HP Inc."
