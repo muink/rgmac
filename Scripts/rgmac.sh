@@ -42,7 +42,7 @@ Mode:\n\
 }
 
 function update_oui() {
-  curl -so "$OUIFILE" "$OUIURL"
+  curl -Lso "$OUIFILE" "$OUIURL"
 }
 
 function random_part() {
