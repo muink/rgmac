@@ -97,8 +97,8 @@ pick_oui() {
   local three=$(printf "$rawpar" | sed -En "s|\t+|\n|g p" | sed -n "/^3=.*/ s|3=|| p" | sed -n 's|^"||; s|"$|| p')
   local str par
   for par in two three; do
-    if   [ -z "$str" ]; then eval "str=\$$par";
-    elif [ -n "$(eval "echo \$$par")" ]; then eval "str='$str\|$'$par"
+    if   [ -z "$str" ]; then str=${!par};
+    elif [ -n "${!par}" ]; then str="$str|${!par}"
     fi
   done
 
