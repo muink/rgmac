@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+# dependent: bash curl coreutils-cksum getopt
+#
+# A random MAC address generator
+# Author: muink
+# Github: https://github.com/muink/rgmac
+#
+
+# Init
+VERSION=1.0
+WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # <--
+#
+OUIURL='https://gitlab.com/wireshark/wireshark/-/raw/master/manuf'
+OUIFILE="$WORKDIR/oui.txt" # <--
+#
+VENDORDIR="$WORKDIR/Vendor/" # <--
+pushd $VENDORDIR >/dev/null && VENDOR=`ls -1 *.txt` && popd >/dev/null
+
+# Get OS type
+OS="`uname`" # just Linux no Darwin
+
+# Get options
+GETOPT=$(getopt -n $(basename $0) -o a:us:t:UV -l format:,upcase,assign:,device:,update,version,help -- "$@")
+[ $? -ne 0 ] && echo -e "\tUse the --help option get help" && exit 1
+eval set -- "$GETOPT"
+
+
+
+# Sub function
+_help() {
+printf "\n\
+Usage: rgmac [OPTION]... \n\
+A random MAC address generator\n\
+\n\
+  e.g. rgmac                          -- Locally administered address (Like WiFi MAC Randomization)\n\
+  e.g. rgmac -us 3C:E0:72             -- Make a Apple MAC with Uppercase (Fake MAC)\n\
+  e.g. rgmac -ac -t console:Sony      -- Make a SonyPS MAC (Fake MAC)\n\
+\n\
+Options:\n\
+  -a, --format <outformat>            -- Format for MAC output\n\
+  -u, --upcase                        -- Uppercase MAC output\n\
+  -s, --assign <xx:xx:xx>             -- Specify OUI manually\n\
+  -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/' directory\n\
+  -U, --update                        -- Update locale OUI database\n\
+  -V, --version                       -- Returns version\n\
+  --help                              -- Returns help info\n\
+\n\
+Opt Format:\n\
+  <xx:xx:xx>    Valid: 06fcee, 06-fc-ee, 06:fc:ee, 06fcee5f3355, 06-fc-ee-5f-33-55, 06:fc:ee:5f:33:55\n\
+  <outformat>   Valid: (C)olon, (D)ash\n"
+}
+
+_version() {
+  echo "$(basename $0) version: v$VERSION"
+}
+
+update_oui() {
+  curl -LSso "$OUIFILE" "$OUIURL"
+}
+
+## randhex <str length>
+#randhex() {
+#  local length=$[ $1 + 0 ]
+#  [ "$length" -ge "1" ] || length=1
+#  local round=$[ $length / 64 + 1 ]
+#  echo $(for _ in $(seq 1 $round); do echo $(cat /dev/urandom 2>/dev/null | head -n 8 | sha256sum) | sed 's|[^a-zA-Z0-9]||g'; done) | sed 's|\s||g' | cut -c 1-$length
+#}
+
+# randhex <[1-32]>
+randhex() {
+  echo $(cat /dev/urandom 2>/dev/null | head -n 8 | md5sum | cut -c 1-${1})
+}
+
+# randnum <min> <max>
+randnum() {
+    local min=$1
+    local max=$[ $2 - $min + 1 ]
+    local num=$(cat /dev/urandom 2>/dev/null | head -n 8 | cksum | cut -f1 -d' ')
+    echo $[ $num % $max + $min ]
+}
+
+# pick_oui <VendorType:NameID>
+pick_oui() {
+  [ -z "$(echo "$1" | grep -Ei "^[0-9a-z]+:[0-9a-z]+$")" ] && return 1
+  local VENDOR="$VENDORDIR${1%%:*}.txt"
+  local NAME="${1##*:}"
+  local ID
+
+  if [ -e "$VENDOR" ]; then
+    ID=$(cat "$VENDOR" | cut -f1 | grep -wn "$NAME" | cut -f1 -d':')
+    [ -z "$ID" ] && return 1
+  else return 1;
+  fi
+
+  local rawpar=$(sed -n "${ID}p" "$VENDOR" | cut -f1 --complement)
+  local two=$(printf "$rawpar" | sed -En "s|\t+|\n|g p" | sed -n "/^2=.*/ s|2=|| p")
+  local three=$(printf "$rawpar" | sed -En "s|\t+|\n|g p" | sed -n "/^3=.*/ s|3=|| p" | sed -n 's|^"||; s|"$|| p')
+  local str par
+  for par in two three; do
+    if   [ -z "$str" ]; then eval "str=\$$par";
+    elif [ -n "$(eval "echo \$$par")" ]; then eval "str='$str\|$'$par"
+    fi
+  done
+
+  local ouilist=$(grep -Ew "$str" "$OUIFILE" | sed -En '/^[0-f]{2}(:[0-f]{2}){2}\t+/ p' | cut -f1)
+  local listcount=$(grep -Ew "$str" "$OUIFILE" | sed -En '/^[0-f]{2}(:[0-f]{2}){2}\t+/ p' | sed -n '$=')
+  echo $ouilist | cut -f$(randnum 1 $listcount) -d' '
+}
+
+
+
+# Main
+# Get options
+while [ -n "$1" ]; do
+  case "$1" in
+    -V|--version)
+      _version
+      exit
+    ;;
+    --help)
+      _help
+      exit
+    ;;
+    -U|--update)
+      update_oui && exit
+      [ $? -ne 0 ] && >&2 echo "$(basename $0): OUI database update failed" && exit 1
+    ;;
+    -a|--format)
+      LINKSYM=$(echo "$2" | sed -En "s|^c$|:|; s|^d$|-|; p")
+      [ -z "$LINKSYM" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
+      shift
+    ;;
+    -u|--upcase)
+      UPPER=true
+    ;;
+    -s|--assign)
+      [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option $1 cannot be used with option '-t' '--device'" && exit 1
+      ASSIGN=$(echo "$2" | grep -Ei "^[0-f]{6,12}$|^[0-f]{2}(-[0-f]{2}){2,5}$|^[0-f]{2}(:[0-f]{2}){2,5}$" | sed 's|[:-]||g' | cut -c-6)
+      [ -z "$ASSIGN" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
+      shift
+    ;;
+    -t|--device)
+      [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option $1 cannot be used with option '-s' '--assign'" && exit 1
+      DEVICE=`pick_oui "$2"`
+      [ -z "$DEVICE" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
+      shift
+    ;;
+    --)
+      shift
+      break
+    ;;
+    *)
+      >&2 echo "$(basename $0): $1 is not an option"
+      exit 1
+    ;;
+  esac
+  shift
+done
+# Get parameters
+# ...
+
+# Output
+if   [ -n "$ASSIGN" ]; then OUI=$ASSIGN;
+elif [ -n "$DEVICE" ]; then OUI=$DEVICE;
+else OUI=$(printf %x $[ 0x$(randhex 2) & 0xFE | 0x02 ] | sed -E 's|^([0-9a-fA-F])$|0\1|')$(randhex 4); # ccccccUG
+fi
+NIC=`randhex 6`
+OUTPUT=${OUI:0:2}$LINKSYM${OUI:2:2}$LINKSYM${OUI:4:2}$LINKSYM${NIC:0:2}$LINKSYM${NIC:2:2}$LINKSYM${NIC:4:2}
+
+[ "$UPPER" == "true" ] && echo ${OUTPUT^^} || echo ${OUTPUT,,}
