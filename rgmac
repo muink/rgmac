@@ -81,7 +81,7 @@ randnum() {
 
 # pick_oui <VendorType:NameID>
 pick_oui() {
-  [ -z "$(echo "$1" | grep -Ei "^[0-9a-z]+:[0-9a-z]+$")" ] && return 1
+  [ -z "$(echo "$1" | grep -Ei "^.+:.+$")" ] && return 1
   local VENDOR="$VENDORDIR${1%%:*}.txt"
   local NAME="${1##*:}"
   local ID
@@ -126,8 +126,8 @@ while [ -n "$1" ]; do
       [ $? -ne 0 ] && >&2 echo "$(basename $0): OUI database update failed" && exit 1
     ;;
     -a|--format)
-      LINKSYM=$(echo "$2" | sed -En "s|^c$|:|; s|^d$|-|; p")
       [ -z "$LINKSYM" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
+      LINKSYM=$(echo "$2" | sed -En "/^c$|^d$/ {s|^c$|:|; s|^d$|-|; p}")
       shift
     ;;
     -u|--upcase)
@@ -141,7 +141,7 @@ while [ -n "$1" ]; do
     ;;
     -t|--device)
       [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option $1 cannot be used with option '-s' '--assign'" && exit 1
-      DEVICE=`pick_oui "$2"`
+      DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
       [ -z "$DEVICE" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
       shift
     ;;
