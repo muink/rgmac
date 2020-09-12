@@ -40,7 +40,7 @@ Options:\n\
   -a, --format <outformat>            -- Format for MAC output\n\
   -u, --upcase                        -- Uppercase MAC output\n\
   -s, --assign <xx:xx:xx>             -- Specify OUI manually\n\
-  -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/' directory\n\
+  -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/<VendorType>.txt'
   -U, --update                        -- Update locale OUI database\n\
   -V, --version                       -- Returns version\n\
   --help                              -- Returns help info\n\
@@ -126,23 +126,23 @@ while [ -n "$1" ]; do
       [ $? -ne 0 ] && >&2 echo "$(basename $0): OUI database update failed" && exit 1
     ;;
     -a|--format)
-      [ -z "$LINKSYM" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
       LINKSYM=$(echo "$2" | sed -En "/^c$|^d$/ {s|^c$|:|; s|^d$|-|; p}")
+      [ -z "$LINKSYM" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
     ;;
     -u|--upcase)
       UPPER=true
     ;;
     -s|--assign)
-      [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option $1 cannot be used with option '-t' '--device'" && exit 1
+      [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-t' '--device'" && exit 1
       ASSIGN=$(echo "$2" | grep -Ei "^[0-f]{6,12}$|^[0-f]{2}(-[0-f]{2}){2,5}$|^[0-f]{2}(:[0-f]{2}){2,5}$" | sed 's|[:-]||g' | cut -c-6)
-      [ -z "$ASSIGN" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
+      [ -z "$ASSIGN" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
     ;;
     -t|--device)
-      [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option $1 cannot be used with option '-s' '--assign'" && exit 1
+      [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-s' '--assign'" && exit 1
       DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
-      [ -z "$DEVICE" ] && >&2 echo "$(basename $0): Option $1 requires a valid argument" && exit 1
+      [ -z "$DEVICE" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
     ;;
     --)
@@ -150,7 +150,7 @@ while [ -n "$1" ]; do
       break
     ;;
     *)
-      >&2 echo "$(basename $0): $1 is not an option"
+      >&2 echo -e "$(basename $0): \'$1\' is not an option\n\tUse the --help option get help"
       exit 1
     ;;
   esac
