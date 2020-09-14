@@ -47,7 +47,8 @@ Options:\n\
 \n\
 Opt Format:\n\
   <xx:xx:xx>    Valid: 06fcee, 06-fc-ee, 06:fc:ee, 06fcee5f3355, 06-fc-ee-5f-33-55, 06:fc:ee:5f:33:55\n\
-  <outformat>   Valid: (C)olon, (D)ash\n"
+  <outformat>   Valid: (C)olon, (D)ash\n\
+\n"
 }
 
 _version() {
@@ -92,7 +93,7 @@ pick_oui() {
   else return 1;
   fi
 
-  local rawpar=$(sed -n "${ID}p" "$VENDOR" | cut -f1 --complement)
+  local rawpar=$(sed -n "${ID}p" "$VENDOR" | cut -f2-)
   local two=$(printf "$rawpar" | sed -En "s|\t+|\n|g p" | sed -n "/^2=.*/ s|2=|| p")
   local three=$(printf "$rawpar" | sed -En "s|\t+|\n|g p" | sed -n "/^3=.*/ s|3=|| p" | sed -n 's|^"||; s|"$|| p')
   local str par
