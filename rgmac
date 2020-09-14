@@ -7,7 +7,7 @@
 #
 
 # Init
-VERSION=1.0
+VERSION=1.1
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # <--
 #
 OUIURL='https://gitlab.com/wireshark/wireshark/-/raw/master/manuf'
@@ -160,6 +160,7 @@ done
 # ...
 
 # Output
+[ ! -e "$OUIFILE" ] && >&2 echo -e "$(basename $0): OUI database not exist, please update DB first\n\tUse the --help option get help" && exit 1
 if   [ -n "$ASSIGN" ]; then OUI=$ASSIGN;
 elif [ -n "$DEVICE" ]; then OUI=$DEVICE;
 else OUI=$(printf %x $[ 0x$(randhex 2) & 0xFE | 0x02 ] | sed -E 's|^([0-9a-fA-F])$|0\1|')$(randhex 4); # ccccccUG
