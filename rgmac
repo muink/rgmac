@@ -7,7 +7,7 @@
 #
 
 # Init
-VERSION=1.1
+VERSION=1.2
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # <--
 #
 OUIURL='https://gitlab.com/wireshark/wireshark/-/raw/master/manuf'
