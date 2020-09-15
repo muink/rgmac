@@ -18,11 +18,12 @@ Options:
   -u, --upcase                        -- Uppercase MAC output
   -s, --assign <xx:xx:xx>             -- Specify OUI manually
   -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/<VendorType>.txt'
+  -l, --list[VendorType]              -- List valid VendorType and NameID
   -U, --update                        -- Update locale OUI database
   -V, --version                       -- Returns version
   --help                              -- Returns help info
 
-Opt Format:
+OptFormat:
   <xx:xx:xx>    Valid: 06fcee, 06-fc-ee, 06:fc:ee, 06fcee5f3355, 06-fc-ee-5f-33-55, 06:fc:ee:5f:33:55
   <outformat>   Valid: (C)olon, (D)ash
 ```
