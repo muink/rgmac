@@ -20,7 +20,7 @@ pushd $VENDORDIR >/dev/null && VENDOR=`ls -1 *.txt` && popd >/dev/null
 OS="`uname`" # just Linux no Darwin
 
 # Get options
-GETOPT=$(getopt -n $(basename $0) -o a:us:t:UV -l format:,upcase,assign:,device:,update,version,help -- "$@")
+GETOPT=$(getopt -n $(basename $0) -o a:us:t:l::UV -l format:,upcase,assign:,device:,list::,update,version,help -- "$@")
 [ $? -ne 0 ] && echo -e "\tUse the --help option get help" && exit 1
 eval set -- "$GETOPT"
 
@@ -40,12 +40,13 @@ Options:\n\
   -a, --format <outformat>            -- Format for MAC output\n\
   -u, --upcase                        -- Uppercase MAC output\n\
   -s, --assign <xx:xx:xx>             -- Specify OUI manually\n\
-  -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/<VendorType>.txt'
+  -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/<VendorType>.txt'\n\
+  -l, --list[VendorType]              -- List valid VendorType and NameID\n\
   -U, --update                        -- Update locale OUI database\n\
   -V, --version                       -- Returns version\n\
   --help                              -- Returns help info\n\
 \n\
-Opt Format:\n\
+OptFormat:\n\
   <xx:xx:xx>    Valid: 06fcee, 06-fc-ee, 06:fc:ee, 06fcee5f3355, 06-fc-ee-5f-33-55, 06:fc:ee:5f:33:55\n\
   <outformat>   Valid: (C)olon, (D)ash\n\
 \n"
@@ -145,6 +146,18 @@ while [ -n "$1" ]; do
       DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
       [ -z "$DEVICE" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
+    ;;
+    -l|--list)
+      if [ -n "$2" ]; then
+        if [ "$(echo "$VENDOR" | grep -E "\b$2.txt\b")" ]; then
+          cat "$VENDORDIR$2.txt" | cut -f1
+        else 
+          >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the -l/--list option list them" && exit 1
+        fi
+      else
+        for l in $VENDOR; do echo "${l%.txt}"; done
+      fi
+      exit
     ;;
     --)
       shift
