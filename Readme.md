@@ -17,6 +17,7 @@ Options:
   -a, --format <outformat>            -- Format for MAC output
   -u, --upcase                        -- Uppercase MAC output
   -s, --assign <xx:xx:xx>             -- Specify OUI manually
+  -e, --query <xx:xx:xx>              -- Query the OUI of the MAC address
   -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/<VendorType>.txt'
   -l, --list[VendorType]              -- List valid VendorType and NameID
   -U, --update                        -- Update locale OUI database

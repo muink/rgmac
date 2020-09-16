@@ -20,7 +20,7 @@ pushd $VENDORDIR >/dev/null && VENDOR=`ls -1 *.txt` && popd >/dev/null
 OS="`uname`" # just Linux no Darwin
 
 # Get options
-GETOPT=$(getopt -n $(basename $0) -o a:us:t:l::UV -l format:,upcase,assign:,device:,list::,update,version,help -- "$@")
+GETOPT=$(getopt -n $(basename $0) -o a:us:e:t:l::UV -l format:,upcase,assign:,query:,device:,list::,update,version,help -- "$@")
 [ $? -ne 0 ] && echo -e "\tUse the --help option get help" && exit 1
 eval set -- "$GETOPT"
 
@@ -40,6 +40,7 @@ Options:\n\
   -a, --format <outformat>            -- Format for MAC output\n\
   -u, --upcase                        -- Uppercase MAC output\n\
   -s, --assign <xx:xx:xx>             -- Specify OUI manually\n\
+  -e, --query <xx:xx:xx>              -- Query the OUI of the MAC address\n\
   -t, --device <VendorType:NameID>    -- Use IEEE public OUI, See 'Vendor/<VendorType>.txt'\n\
   -l, --list[VendorType]              -- List valid VendorType and NameID\n\
   -U, --update                        -- Update locale OUI database\n\
@@ -137,7 +138,7 @@ while [ -n "$1" ]; do
     ;;
     -s|--assign)
       [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-t' '--device'" && exit 1
-      ASSIGN=$(echo "$2" | grep -Ei "^[0-f]{6,12}$|^[0-f]{2}(-[0-f]{2}){2,5}$|^[0-f]{2}(:[0-f]{2}){2,5}$" | sed 's|[:-]||g' | cut -c-6)
+      ASSIGN=$(echo "$2" | grep -Ei "^([0-f]{6}|[0-f]{12})$|^[0-f]{2}((-[0-f]{2}){2}|(-[0-f]{2}){5})$|^[0-f]{2}((:[0-f]{2}){2}|(:[0-f]{2}){5})$" | sed 's|[:-]||g' | cut -c-6)
       [ -z "$ASSIGN" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
     ;;
@@ -146,6 +147,25 @@ while [ -n "$1" ]; do
       DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
       [ -z "$DEVICE" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
+    ;;
+    -e|--query)
+      QUERY=$(echo "${2,,}" | grep -Ei "^([0-f]{6}|[0-f]{12})$|^[0-f]{2}((-[0-f]{2}){2}|(-[0-f]{2}){5})$|^[0-f]{2}((:[0-f]{2}){2}|(:[0-f]{2}){5})$" | sed 's|[:-]||g' | cut -c-6)
+      [ -z "$QUERY" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
+      if   [ "$[ 0x${QUERY:0:2} & 0x01 ]" -eq "$[0x01]" ]; then
+        >&2 echo -e "$(basename $0): Option '$1' requires a valid unicast MAC address\n\tUse the --help option get help" && exit 1
+      elif [ "$[ 0x${QUERY:0:2} & 0x02 ]" -eq "$[0x02]" ]; then
+        echo "$2: Locally administered address" && exit
+      else
+        echo "$2: Globally unique address"
+        GLOBALLY=$(grep -i "${QUERY:0:2}:${QUERY:2:2}:${QUERY:4:2}" "$OUIFILE")
+        if [ -n "$GLOBALLY" ]; then
+          echo "Record: $GLOBALLY"
+          exit
+        else
+          echo "No matching record found"
+          exit
+        fi
+      fi
     ;;
     -l|--list)
       if [ -n "$2" ]; then
