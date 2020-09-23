@@ -20,9 +20,21 @@ pushd $VENDORDIR >/dev/null && VENDOR=`ls -1 *.txt` && popd >/dev/null
 OS="`uname`" # just Linux no Darwin
 
 # Get options
-GETOPT=$(getopt -n $(basename $0) -o a:us:e:t:l::UV -l format:,upcase,assign:,query:,device:,list::,update,version,help -- "$@")
+GETOPT=$(getopt -n $(basename $0) -o a:ut:s:e:l::UV -l format:,upcase,device:,assign:,query:,list::,update,version,help -- "$@")
 [ $? -ne 0 ] && echo -e "\tUse the --help option get help" && exit 1
 eval set -- "$GETOPT"
+ERROR=$(echo "$GETOPT" | sed "s|'[^']*'||g; s| -- .+$||; s| --$||")
+
+# Duplicate options
+for ru in --help\|--help -V\|--version -U\|--update -l\|--list -e\|--query -s\|--assign -t\|--device -u\|--upcase -a\|--format; do
+  eval "echo \"\$ERROR\" | grep -E \" ${ru%|*}[ .+]* ($ru)| ${ru#*|}[ .+]* ($ru)\" >/dev/null && >&2 echo \"\$(basename \$0): Option '\$ru' option is repeated\" && exit 1"
+done
+# Independent options
+for ru in --help\|--help -V\|--version -U\|--update -l\|--list -e\|--query; do
+  eval "echo \"\$ERROR\" | grep -E \"^ ($ru) .+|.+ ($ru) .+|.+ ($ru) *\$\" >/dev/null && >&2 echo \"\$(basename \$0): Option '\$(echo \"\$ERROR\" | sed -E \"s,^.*($ru).*\$,\\1,\")' cannot be used with other options\" && exit 1"
+done
+# Conflicting options
+echo "$ERROR" | grep -E " (-s|--assign)\b" | grep -E " (-t|--device)\b" >/dev/null && >&2 echo "$(basename $0): Option '-s|--assign' cannot be used with option '-t|--device'" && exit 1
 
 
 
@@ -163,13 +175,11 @@ while [ -n "$1" ]; do
       fi
     ;;
     -s|--assign)
-      [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-t' '--device'" && exit 1
       ASSIGN=$(echo "$2" | grep -Ei "^([0-f]{6}|[0-f]{12})$|^[0-f]{2}((-[0-f]{2}){2}|(-[0-f]{2}){5})$|^[0-f]{2}((:[0-f]{2}){2}|(:[0-f]{2}){5})$" | sed 's|[:-]||g' | cut -c-6)
       [ -z "$ASSIGN" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
     ;;
     -t|--device)
-      [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-s' '--assign'" && exit 1
       DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
       [ -z "$DEVICE" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
       shift
