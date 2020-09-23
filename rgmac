@@ -113,40 +113,35 @@ pick_oui() {
 
 
 # Main
+#   +-----------+-----------+-----------+-----------+-----------+-----------+-----------+
+#   |  device   |  assign   |   query   |   list    |  update   |  version  |   help    |
+#   +-----------+-----------+-----------+-----------+-----------+-----------+-----------+
 # Get options
 while [ -n "$1" ]; do
   case "$1" in
-    -V|--version)
-      _version
-      exit
-    ;;
     --help)
       _help
+      exit
+    ;;
+    -V|--version)
+      _version
       exit
     ;;
     -U|--update)
       update_oui && exit
       [ $? -ne 0 ] && >&2 echo "$(basename $0): OUI database update failed" && exit 1
     ;;
-    -a|--format)
-      LINKSYM=$(echo "$2" | sed -En "/^c$|^d$/ {s|^c$|:|; s|^d$|-|; p}")
-      [ -z "$LINKSYM" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
-      shift
-    ;;
-    -u|--upcase)
-      UPPER=true
-    ;;
-    -s|--assign)
-      [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-t' '--device'" && exit 1
-      ASSIGN=$(echo "$2" | grep -Ei "^([0-f]{6}|[0-f]{12})$|^[0-f]{2}((-[0-f]{2}){2}|(-[0-f]{2}){5})$|^[0-f]{2}((:[0-f]{2}){2}|(:[0-f]{2}){5})$" | sed 's|[:-]||g' | cut -c-6)
-      [ -z "$ASSIGN" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
-      shift
-    ;;
-    -t|--device)
-      [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-s' '--assign'" && exit 1
-      DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
-      [ -z "$DEVICE" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
-      shift
+    -l|--list)
+      if [ -n "$2" ]; then
+        if [ "$(echo "$VENDOR" | grep -E "\b$2.txt\b")" ]; then
+          cat "$VENDORDIR$2.txt" | cut -f1
+        else 
+          >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the -l/--list option list them" && exit 1
+        fi
+      else
+        for l in $VENDOR; do echo "${l%.txt}"; done
+      fi
+      exit
     ;;
     -e|--query)
       QUERY=$(echo "${2,,}" | grep -Ei "^([0-f]{6}|[0-f]{12})$|^[0-f]{2}((-[0-f]{2}){2}|(-[0-f]{2}){5})$|^[0-f]{2}((:[0-f]{2}){2}|(:[0-f]{2}){5})$" | sed 's|[:-]||g' | cut -c-6)
@@ -167,17 +162,25 @@ while [ -n "$1" ]; do
         fi
       fi
     ;;
-    -l|--list)
-      if [ -n "$2" ]; then
-        if [ "$(echo "$VENDOR" | grep -E "\b$2.txt\b")" ]; then
-          cat "$VENDORDIR$2.txt" | cut -f1
-        else 
-          >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the -l/--list option list them" && exit 1
-        fi
-      else
-        for l in $VENDOR; do echo "${l%.txt}"; done
-      fi
-      exit
+    -s|--assign)
+      [ -n "$DEVICE" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-t' '--device'" && exit 1
+      ASSIGN=$(echo "$2" | grep -Ei "^([0-f]{6}|[0-f]{12})$|^[0-f]{2}((-[0-f]{2}){2}|(-[0-f]{2}){5})$|^[0-f]{2}((:[0-f]{2}){2}|(:[0-f]{2}){5})$" | sed 's|[:-]||g' | cut -c-6)
+      [ -z "$ASSIGN" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
+      shift
+    ;;
+    -t|--device)
+      [ -n "$ASSIGN" ] && >&2 echo "$(basename $0): Option '$1' cannot be used with option '-s' '--assign'" && exit 1
+      DEVICE=`pick_oui "$2" | sed 's|[:-]||g'`
+      [ -z "$DEVICE" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
+      shift
+    ;;
+    -a|--format)
+      LINKSYM=$(echo "$2" | sed -En "/^c$|^d$/ {s|^c$|:|; s|^d$|-|; p}")
+      [ -z "$LINKSYM" ] && >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the --help option get help" && exit 1
+      shift
+    ;;
+    -u|--upcase)
+      UPPER=true
     ;;
     --)
       shift
