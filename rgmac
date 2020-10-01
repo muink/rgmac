@@ -197,7 +197,7 @@ while [ -n "$1" ]; do
       break
     ;;
     *)
-      >&2 echo -e "$(basename $0): \'$1\' is not an option\n\tUse the --help option get help"
+      >&2 echo -e "$(basename $0): '$1' is not an option\n\tUse the --help option get help"
       exit 1
     ;;
   esac
