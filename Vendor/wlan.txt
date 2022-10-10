@@ -1,6 +1,6 @@
 Liteon		2=LiteonTe
 HonHai		2=HonHaiPr
-AzureWav	2=AzureWav
+AzureWav					3="AzureWave Technology Inc."
 Intel		2=IntelCor
 Apple						3="Apple, Inc."
 RivetNet	2=RivetNet

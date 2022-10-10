@@ -8,3 +8,5 @@ D-Link		2=D-LinkIn		3="D-Link Corporation"
 Ubnt		2=Ubiquiti
 Cisco						3="Cisco Systems, Inc"
 Linksys		2=LinksysG|Cisco-Li|BelkinIn
+Xiaomi		2=XiaomiCo|XIAOMIEl
+Huawei		2=HuaweiTe
