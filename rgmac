@@ -21,7 +21,7 @@ OS="`uname`" # just Linux no Darwin
 
 # Get options
 GETOPT=$(getopt -n $(basename $0) -o a:ut:s:e:l::UV -l format:,upcase,device:,assign:,query:,list::,update,version,help -- "$@")
-[ $? -ne 0 ] && echo -e "\tUse the --help option get help" && exit 1
+[ $? -ne 0 ] && >&2 echo -e "\tUse the --help option get help" && exit 1
 eval set -- "$GETOPT"
 ERROR=$(echo "$GETOPT" | sed "s|'[^']*'||g; s| -- .+$||; s| --$||")
 
@@ -210,7 +210,7 @@ done
 [ ! -e "$OUIFILE" ] && >&2 echo -e "$(basename $0): OUI database not exist, please update DB first\n\tUse the --help option get help" && exit 1
 if   [ -n "$ASSIGN" ]; then OUI=$ASSIGN;
 elif [ -n "$DEVICE" ]; then OUI=$DEVICE;
-else OUI=$(printf %x $[ 0x$(randhex 2) & 0xFE | 0x02 ] | sed -E 's|^([0-9a-fA-F])$|0\1|')$(randhex 4); # ccccccUG
+else OUI=$(printf %x $[ 0x$(randhex 2) & 0xFE | 0x02 ] | sed -E 's|^([0-9a-fA-F])$|0\1|')$(randhex 4); # ccccccLI
 fi
 NIC=`randhex 6`
 OUTPUT=${OUI:0:2}$LINKSYM${OUI:2:2}$LINKSYM${OUI:4:2}$LINKSYM${NIC:0:2}$LINKSYM${NIC:2:2}$LINKSYM${NIC:4:2}
