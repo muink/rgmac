@@ -164,7 +164,7 @@ while [ -n "$1" ]; do
         echo "$2: Locally administered address" && exit
       else
         echo "$2: Globally unique address"
-        GLOBALLY=$(grep -i "${QUERY:0:2}:${QUERY:2:2}:${QUERY:4:2}" "$OUIFILE")
+        GLOBALLY=$(grep -i "^${QUERY:0:2}:${QUERY:2:2}:${QUERY:4:2}" "$OUIFILE")
         if [ -n "$GLOBALLY" ]; then
           echo "Record: $GLOBALLY"
           exit
