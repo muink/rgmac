@@ -7,7 +7,7 @@
 #
 
 # Init
-VERSION=1.4.7
+VERSION=1.5.0
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # <--
 #
 OUIURL='https://www.wireshark.org/download/automated/data/manuf'
@@ -117,8 +117,8 @@ pick_oui() {
     fi
   done
 
-  local ouilist=$(grep -Ew "$str" "$OUIFILE" | sed -En '/^[0-f]{2}(:[0-f]{2}){2}\t+/ p' | cut -f1)
-  local listcount=$(grep -Ew "$str" "$OUIFILE" | sed -En '/^[0-f]{2}(:[0-f]{2}){2}\t+/ p' | sed -n '$=')
+  local ouilist=$(grep -E "$str" "$OUIFILE" | sed -En '/^[[:xdigit:]]{2}(:[[:xdigit:]]{2}){2}\s+/ p' | cut -f1)
+  local listcount=$(grep -E "$str" "$OUIFILE" | sed -En '/^[[:xdigit:]]{2}(:[[:xdigit:]]{2}){2}\s+/ p' | sed -n '$=')
   echo $ouilist | cut -f$(randnum 1 $listcount) -d' '
 }
 
