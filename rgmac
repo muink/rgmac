@@ -7,7 +7,7 @@
 #
 
 # Init
-VERSION=1.5.0
+VERSION=1.5.1
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # <--
 #
 OUIURL='https://www.wireshark.org/download/automated/data/manuf'
@@ -23,18 +23,18 @@ OS="`uname`" # just Linux no Darwin
 GETOPT=$(getopt -n $(basename $0) -o a:ut:s:e:l::UV -l format:,upcase,device:,assign:,query:,list::,update,version,help -- "$@")
 [ $? -ne 0 ] && >&2 echo -e "\tUse the --help option get help" && exit 1
 eval set -- "$GETOPT"
-ERROR=$(echo "$GETOPT" | sed "s|'[^']*'||g; s| -- .+$||; s| --$||")
+OPTIONS=$(sed "s|'[^']*'||g; s| -- .+$||; s| --$||" <<< "$GETOPT")
 
 # Duplicate options
 for ru in --help\|--help -V\|--version -U\|--update -l\|--list -e\|--query -s\|--assign -t\|--device -u\|--upcase -a\|--format; do
-  eval "echo \"\$ERROR\" | grep -E \" ${ru%|*}[ .+]* ($ru)| ${ru#*|}[ .+]* ($ru)\" >/dev/null && >&2 echo \"\$(basename \$0): Option '\$ru' option is repeated\" && exit 1"
+  eval "grep -qE \" ${ru%|*}[ .+]* ($ru)| ${ru#*|}[ .+]* ($ru)\" <<< \"\$OPTIONS\" && >&2 echo \"\$(basename \$0): Option '\$ru' option is repeated\" && exit 1"
 done
 # Independent options
 for ru in --help\|--help -V\|--version -U\|--update -l\|--list -e\|--query; do
-  eval "echo \"\$ERROR\" | grep -E \"^ ($ru) .+|.+ ($ru) .+|.+ ($ru) *\$\" >/dev/null && >&2 echo \"\$(basename \$0): Option '\$(echo \"\$ERROR\" | sed -E \"s,^.*($ru).*\$,\\1,\")' cannot be used with other options\" && exit 1"
+  eval "grep -qE \"^ ($ru) .+|.+ ($ru) .+|.+ ($ru) *\$\" <<< \"\$OPTIONS\" && >&2 echo \"\$(basename \$0): Option '\$(sed -E \"s,^.*($ru).*\$,\\1,\" <<< \"\$OPTIONS\")' cannot be used with other options\" && exit 1"
 done
 # Conflicting options
-echo "$ERROR" | grep -E " (-s|--assign)\b" | grep -E " (-t|--device)\b" >/dev/null && >&2 echo "$(basename $0): Option '-s|--assign' cannot be used with option '-t|--device'" && exit 1
+echo "$OPTIONS" | grep -E " (-s|--assign)\b" | grep -E " (-t|--device)\b" >/dev/null && >&2 echo "$(basename $0): Option '-s|--assign' cannot be used with option '-t|--device'" && exit 1
 
 
 
@@ -96,7 +96,7 @@ randnum() {
 
 # pick_oui <VendorType:NameID>
 pick_oui() {
-  [ -z "$(echo "$1" | grep -Ei "^.+:.+$")" ] && return 1
+  grep -qEi "^.+:.+$" <<< "$1" || return 1
   local VENDOR="$VENDORDIR${1%%:*}.txt"
   local NAME="${1##*:}"
   local ID
@@ -145,7 +145,7 @@ while [ -n "$1" ]; do
     ;;
     -l|--list)
       if [ -n "$2" ]; then
-        if [ "$(echo "$VENDOR" | grep -E "\b$2.txt\b")" ]; then
+        if [ "$(grep -E "\b$2.txt\b" <<< "$VENDOR")" ]; then
           cat "$VENDORDIR$2.txt" | cut -f1
         else 
           >&2 echo -e "$(basename $0): Option '$1' requires a valid argument\n\tUse the -l/--list option list them" && exit 1
